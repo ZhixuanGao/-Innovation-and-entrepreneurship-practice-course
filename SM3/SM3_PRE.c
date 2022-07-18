@@ -86,8 +86,9 @@ unsigned int P1(unsigned int X)
 	return X ^ LeftRotate(X, 15) ^ LeftRotate(X, 23);
 }
 
-/*初始化函数*/
+
 void SM3Init(SM3::SM3Context *context) {
+	/*初始化*/
 	context->intermediateHash[0] = 0x7380166F;
 	context->intermediateHash[1] = 0x4914B2B9;
 	context->intermediateHash[2] = 0x172442D7;
