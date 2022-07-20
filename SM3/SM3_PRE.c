@@ -20,6 +20,7 @@ using namespace std;
 
 unsigned int hash_all = 0;//总的消息块
 unsigned int hash_rate = 0;//当前hash进度
+
 /*判断运行环境是否为小端*/
 static const int endianTest = 1;
 #define IsLittleEndian() (*(char *)&endianTest == 1)
