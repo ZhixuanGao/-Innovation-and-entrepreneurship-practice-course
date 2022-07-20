@@ -1,16 +1,17 @@
 #pragma once
 
-#define HASH_SIZE 32 //初始IV值长度
+#define HASH_SIZE 32 //哈希向量的大小
+
 namespace SM3 {
-	typedef struct Context {
-		unsigned int intermediateHash[HASH_SIZE / 4];
-		unsigned char MessageGtoup[64]; //512位的数据组
-	} SM3_Context;
 
-	unsigned char *SM3_Calculate(const unsigned char *message,
-		unsigned int messagelen, unsigned char digest[HASH_SIZE]);
+	typedef struct sm3_context_s {
+		
+		unsigned char MessageBlock[64]; //512位的数据块
 
-	std::vector<uint32_t> call_hash_sm3(char *filepath);
+		unsigned int IntermediateHash[HASH_SIZE / 4];
+	}sm3_context_t;
 
+	unsigned char *Calculate(const unsigned char *message, unsigned int messageLen, unsigned char digest[HASH_SIZE]); //计算函数
+	std::vector<uint32_t> Implement_SM3(char *filepath); //执行sm3
 	double progress();
 }
