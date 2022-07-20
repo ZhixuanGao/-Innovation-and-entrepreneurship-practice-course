@@ -188,6 +188,7 @@ void SM3ProcessMessageBlock(SM3::SM3Context *context)
 	messagelen是消息的字节数;
 	digset表示返回的哈希值
 */
+
 unsigned char *SM3::SM3Calc(const unsigned char *message,
 	unsigned int messageLen, unsigned char digest[SM3_HASH_SIZE])
 {
