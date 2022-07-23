@@ -15,7 +15,6 @@
 
 using namespace std;
 unsigned int hash_all = 0; //总的消息块
-unsigned int Speed = 0; //当前进度
 
 #define MAXSIZE 1024 * 1024 * 512 //文件最大大小
 static const int test = 1;
@@ -175,7 +174,6 @@ unsigned char *SM3::Calculate(const unsigned char *message,
 	{
 		//对前面的消息分组进行处理
 		memcpy(context.MessageBlock, message + i * 64, 64);
-		Speed = i + 1;//处理一个消息块，进度加1
 		SM3_ProcessMessageBlock(&context);
 	}
 
@@ -184,22 +182,19 @@ unsigned char *SM3::Calculate(const unsigned char *message,
 	if (JudgeEndian())
 		ReverseWord(&len);
 	memcpy(context.MessageBlock, message + i * 64, r);
-	context.MessageBlock[r] = 0x80;//在末尾添加0x80，即0x10000000
+	context.MessageBlock[r] = 0x88;//在末尾添加0x80，即0x10001000
 	if (r <= 55)//如果剩下的位数少于440
 	{
 		memset(context.MessageBlock + r + 1, 0, 64 - r - 1 - 8 + 4);
 		memcpy(context.MessageBlock + 64 - 4, &len, 4);
-		Speed += 1;
 		SM3_ProcessMessageBlock(&context);
 	}
 	else
 	{
 		memset(context.MessageBlock + r + 1, 0, 64 - r - 1);
-		Speed += 1;
 		SM3_ProcessMessageBlock(&context);
 		memset(context.MessageBlock, 0, 64 - 4);
 		memcpy(context.MessageBlock + 64 - 4, &len, 4);
-		Speed += 1;
 		SM3_ProcessMessageBlock(&context);
 	}
 
@@ -240,10 +235,6 @@ std::vector<uint32_t> SM3::Implement_SM3(char *filepath)
 	return hash_result;
 }
 
-//计算现在的哈希进度
-double progress() {
-	return (double(Speed) / hash_all);
-}
 
 //创建固定大小的txt文件
 void CreatTxt(char* pathName,int length)
@@ -264,16 +255,14 @@ void CreatTxt(char* pathName,int length)
 
 int main() {
 	char filepath[] = "test.txt";
-	CreatTxt(filepath, 1024*512);
+	//CreatTxt(filepath, 1024*512);
 	std::vector<uint32_t> hash_result;
 	hash_result = SM3::Implement_SM3(filepath);
-	for (int i = 0; i < 32; i++) {
+	std:cout << "Hash Result: ";
+ 	for (int i = 0; i < 32; i++) {
 		std::cout << std::hex << std::setw(2) << std::setfill('0') << hash_result[i];
 		if (((i + 1) % 4) == 0) std::cout << " ";
 	}
 	std::cout << std::endl;
-
-	double speed = progress();
-	printf("\n当前进度: %f", speed);
 	return 0;
 }
