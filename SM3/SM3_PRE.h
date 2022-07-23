@@ -13,5 +13,4 @@ namespace SM3 {
 
 	unsigned char *Calculate(const unsigned char *message, unsigned int messageLen, unsigned char digest[HASH_SIZE]); //计算函数
 	std::vector<uint32_t> Implement_SM3(char *filepath); //执行sm3
-	double progress();
 }
