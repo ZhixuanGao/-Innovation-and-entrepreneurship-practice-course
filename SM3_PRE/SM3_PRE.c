@@ -11,6 +11,7 @@
 #include <chrono>
 #include <time.h>
 #include <stdlib.h>
+#include <windows.h>
 #include "SM3.h"
 
 using namespace std;
@@ -22,7 +23,7 @@ unsigned int hash_all = 0; //总的消息块
 static const int endianTest = 1;
 #define IsLittleEndian() (*(char *)&endianTest == 1)
 //向左循环移位
-#define LeftRotate(word, bits) ( (word) << (bits) | (word) >> (32 - (bits)) )
+#define LeftShift(word, bits) ( (word) << (bits) | (word) >> (32 - (bits)) )
 
 
 //返回Tj常量的函数实现
@@ -61,13 +62,13 @@ unsigned int GG(unsigned int a, unsigned int b, unsigned int c, int i)
 //实现置换功能P0
 unsigned int P0(unsigned int a)
 {
-	return a ^ LeftRotate(a, 9) ^ LeftRotate(a, 17);
+	return a ^ LeftShift(a, 9) ^ LeftShift(a, 17);
 }
 
 //实现置换功能P1
 unsigned int P1(unsigned int a)
 {
-	return a ^ LeftRotate(a, 15) ^ LeftRotate(a, 23);
+	return a ^ LeftShift(a, 15) ^ LeftShift(a, 23);
 }
 
 //反转四个字节的字节序
@@ -115,8 +116,8 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 	}
 	for (i = 16; i < 68; i++)
 	{
-		W1[i] = (W1[i - 16] ^ W1[i - 9] ^ LeftRotate(W1[i - 3], 15)) ^ LeftRotate((W1[i - 16] ^ W1[i - 9] ^ LeftRotate(W1[i - 3], 15)), 15) ^ LeftRotate((W1[i - 16] ^ W1[i - 9] ^ LeftRotate(W1[i - 3], 15)), 23)
-			^ LeftRotate(W1[i - 13], 7) ^ W1[i - 6];
+		W1[i] = (W1[i - 16] ^ W1[i - 9] ^ LeftShift(W1[i - 3], 15)) ^ LeftShift((W1[i - 16] ^ W1[i - 9] ^ LeftShift(W1[i - 3], 15)), 15) ^ LeftShift((W1[i - 16] ^ W1[i - 9] ^ LeftShift(W1[i - 3], 15)), 23)
+			^ LeftShift(W1[i - 13], 7) ^ W1[i - 6];
 	}
 	for (i = 0; i < 64; i++)
 	{
@@ -135,19 +136,19 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 	for (i = 0; i < 64; i++)
 	{
 
-		SS1 = LeftRotate((LeftRotate(A, 12) + E + LeftRotate(T(i), i)), 7);
-		SS2 = SS1 ^ LeftRotate(A, 12);
+		SS1 = LeftShift((LeftShift(A, 12) + E + LeftShift(T(i), i)), 7);
+		SS2 = SS1 ^ LeftShift(A, 12);
 		TT1 = FF(A, B, C, i) + D + SS2 + W2[i];
 		TT2 = GG(E, F, G, i) + H + SS1 + W1[i];
 
 		D = C;
-		C = LeftRotate(B, 9);
+		C = LeftShift(B, 9);
 		B = A;
 		A = TT1;
 		H = G;
-		G = LeftRotate(F, 19);
+		G = LeftShift(F, 19);
 		F = E;
-		E = TT2 ^ LeftRotate(TT2, 9) ^ LeftRotate(TT2, 17);
+		E = TT2 ^ LeftShift(TT2, 9) ^ LeftShift(TT2, 17);
 	}
 	context->IntermediateHash[0] ^= A;
 	context->IntermediateHash[1] ^= B;
@@ -238,6 +239,8 @@ std::vector<uint32_t> SM3::Implement_SM3(char *filepath)
 	delete[]buffer;
 	return hash_result;
 }
+
+
 
 int main() {
 	char filepath[] = "test.txt";
