@@ -8,7 +8,7 @@ namespace SM3 {
 		
 		unsigned char MessageBlock[64]; //512位的数据块
 
-		unsigned int IntermediateHash[HASH_SIZE / 4];
+		unsigned int iv[HASH_SIZE / 4];
 	}sm3_context_t;
 
 	unsigned char *Calculate(const unsigned char *message, unsigned int messageLen, unsigned char digest[HASH_SIZE]); //计算函数
