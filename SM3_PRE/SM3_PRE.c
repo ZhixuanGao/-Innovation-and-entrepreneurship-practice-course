@@ -16,12 +16,16 @@
 using namespace std;
 unsigned int hash_all = 0; //总的消息块
 
-#define MAXSIZE 1024 * 1024 * 512 //文件最大大小
-static const int test = 1;
-#define JudgeEndian() (*(char *)&test == 1) //判断字节序,不为0表示是小端字节序
-#define LeftRotate(word, bits) ( (word) << (bits) | (word) >> (32 - (bits)) ) //向左循环移位
+#define MAXSIZE 1024 * 512 //加密消息最大长度
 
-//T
+//判断运行环境是否为小端
+static const int endianTest = 1;
+#define IsLittleEndian() (*(char *)&endianTest == 1)
+//向左循环移位
+#define LeftRotate(word, bits) ( (word) << (bits) | (word) >> (32 - (bits)) )
+
+
+//返回Tj常量的函数实现
 unsigned int T(int i)
 {
 	if (i >= 0 && i <= 15)
@@ -32,7 +36,7 @@ unsigned int T(int i)
 		return 0;
 }
 
-//FF
+//实现布尔函数FF功能
 unsigned int FF(unsigned int a, unsigned int b, unsigned int c, int i)
 {
 	if (i >= 0 && i <= 15)
@@ -43,7 +47,7 @@ unsigned int FF(unsigned int a, unsigned int b, unsigned int c, int i)
 		return 0;
 }
 
-//GG
+//实现布尔函数GG功能
 unsigned int GG(unsigned int a, unsigned int b, unsigned int c, int i)
 {
 	if (i >= 0 && i <= 15)
@@ -54,23 +58,22 @@ unsigned int GG(unsigned int a, unsigned int b, unsigned int c, int i)
 		return 0;
 }
 
-//P0
+//实现置换功能P0
 unsigned int P0(unsigned int a)
 {
 	return a ^ LeftRotate(a, 9) ^ LeftRotate(a, 17);
 }
 
-//P1
+//实现置换功能P1
 unsigned int P1(unsigned int a)
 {
 	return a ^ LeftRotate(a, 15) ^ LeftRotate(a, 23);
 }
 
+//反转四个字节的字节序
 unsigned int *ReverseWord(unsigned int *sequence)
 {
-	//反转四个字节的字节序
 	unsigned char *byte, temp;
-
 	byte = (unsigned char *)sequence;
 	temp = byte[0];
 	byte[0] = byte[3];
@@ -83,7 +86,7 @@ unsigned int *ReverseWord(unsigned int *sequence)
 
 }
 
-/*初始化函数*/
+//初始化函数
 void SM3_INIT(SM3::sm3_context_s *context) {
 	context->IntermediateHash[0] = 0x7380166f;
 	context->IntermediateHash[1] = 0x4914b2b9;
@@ -95,7 +98,7 @@ void SM3_INIT(SM3::sm3_context_s *context) {
 	context->IntermediateHash[7] = 0xb0fb0e4e;
 }
 
-/* 处理消息块*/
+//处理消息块
 void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 {
 	int i;
@@ -103,11 +106,11 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 	unsigned int W2[64];
 	unsigned int A, B, C, D, E, F, G, H, SS1, SS2, TT1, TT2;
 
-	/* 消息扩展 */
+	//消息扩展
 	for (i = 0; i < 16; i++)
 	{
 		W1[i] = *(unsigned int *)(context->MessageBlock + i * 4);
-		if (JudgeEndian())
+		if (IsLittleEndian())
 			ReverseWord(W1 + i);
 	}
 	for (i = 16; i < 68; i++)
@@ -120,7 +123,7 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 		W2[i] = W1[i] ^ W1[i + 4];
 	}
 
-	/* 消息压缩 */
+	//消息压缩
 	A = context->IntermediateHash[0];
 	B = context->IntermediateHash[1];
 	C = context->IntermediateHash[2];
@@ -131,7 +134,7 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 	H = context->IntermediateHash[7];
 	for (i = 0; i < 64; i++)
 	{
-		unsigned int SS3;
+
 		SS1 = LeftRotate((LeftRotate(A, 12) + E + LeftRotate(T(i), i)), 7);
 		SS2 = SS1 ^ LeftRotate(A, 12);
 		TT1 = FF(A, B, C, i) + D + SS2 + W2[i];
@@ -156,7 +159,7 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 	context->IntermediateHash[7] ^= H;
 }
 
-//Calculate函数:
+//SM3消息加密运算函数
 unsigned char *SM3::Calculate(const unsigned char *message,
 	unsigned int MessageLen, unsigned char digest[HASH_SIZE])
 {
@@ -179,10 +182,10 @@ unsigned char *SM3::Calculate(const unsigned char *message,
 
 	//填充消息分组
 	len = MessageLen * 8;
-	if (JudgeEndian())
+	if (IsLittleEndian())
 		ReverseWord(&len);
 	memcpy(context.MessageBlock, message + i * 64, r);
-	context.MessageBlock[r] = 0x88;//在末尾添加0x80，即0x10001000
+	context.MessageBlock[r] = 0x80;//在末尾添加0x80，即0x10001000
 	if (r <= 55)//如果剩下的位数少于440
 	{
 		memset(context.MessageBlock + r + 1, 0, 64 - r - 1 - 8 + 4);
@@ -198,7 +201,7 @@ unsigned char *SM3::Calculate(const unsigned char *message,
 		SM3_ProcessMessageBlock(&context);
 	}
 
-	if (JudgeEndian())
+	if (IsLittleEndian())
 		for (i = 0; i < 8; i++)
 			ReverseWord(context.IntermediateHash + i);
 	memcpy(digest, context.IntermediateHash, HASH_SIZE);
@@ -221,11 +224,12 @@ std::vector<uint32_t> SM3::Implement_SM3(char *filepath)
 
 	fin.open(filepath, std::ifstream::binary);
 	fin >> buffer;
+	fin.close();
 
 	auto start = std::chrono::high_resolution_clock::now();
 	SM3::Calculate(buffer, filesize, hash_output);
 	auto end = std::chrono::high_resolution_clock::now();
-
+	// 以毫秒为单位，返回所用时间
 	std::chrono::duration<double, std::ratio<1, 1000>> diff = end - start;
 	std::cout << "Time: " << diff.count() << " ms\n";
 
@@ -235,27 +239,8 @@ std::vector<uint32_t> SM3::Implement_SM3(char *filepath)
 	return hash_result;
 }
 
-
-//创建固定大小的txt文件
-void CreatTxt(char* pathName,int length)
-{
-	ofstream fout(pathName);
-	char char_list[] = "abcdefghijklmnopqrstuvwxyz";
-	int n = 26;
-	if (fout) { // 如果创建成功
-		for (int i = 0; i < length; i++)
-		{
-			fout << char_list[rand()%n];
-		}
-
-		fout.close(); 
-	}
-}
-
-
 int main() {
 	char filepath[] = "test.txt";
-	//CreatTxt(filepath, 1024*512);
 	std::vector<uint32_t> hash_result;
 	hash_result = SM3::Implement_SM3(filepath);
 	std:cout << "Hash Result: ";
@@ -266,4 +251,3 @@ int main() {
 	std::cout << std::endl;
 	return 0;
 }
-
