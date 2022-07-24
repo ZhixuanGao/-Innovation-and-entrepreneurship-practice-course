@@ -210,7 +210,7 @@ unsigned char *SM3::Calculate(const unsigned char *message,
 	return digest; 
 }
 
-//Implement_SM3函数
+//执行SM3j加密test中的内容并获得计算结果
 std::vector<uint32_t> SM3::Implement_SM3(char *filepath)
 {
 	std::vector<uint32_t> hash_result(32, 0);
