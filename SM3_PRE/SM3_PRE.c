@@ -89,14 +89,14 @@ unsigned int *ReverseWord(unsigned int *sequence)
 
 //初始化函数
 void SM3_INIT(SM3::sm3_context_s *context) {
-	context->IntermediateHash[0] = 0x7380166f;
-	context->IntermediateHash[1] = 0x4914b2b9;
-	context->IntermediateHash[2] = 0x172442d7;
-	context->IntermediateHash[3] = 0xda8a0600;
-	context->IntermediateHash[4] = 0xa96f30bc;
-	context->IntermediateHash[5] = 0x163138aa;
-	context->IntermediateHash[6] = 0xe38dee4d;
-	context->IntermediateHash[7] = 0xb0fb0e4e;
+	context->iv[0] = 0x7380166f;
+	context->iv[1] = 0x4914b2b9;
+	context->iv[2] = 0x172442d7;
+	context->iv[3] = 0xda8a0600;
+	context->iv[4] = 0xa96f30bc;
+	context->iv[5] = 0x163138aa;
+	context->iv[6] = 0xe38dee4d;
+	context->iv[7] = 0xb0fb0e4e;
 }
 
 //处理消息块
@@ -125,14 +125,14 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 	}
 
 	//消息压缩
-	A = context->IntermediateHash[0];
-	B = context->IntermediateHash[1];
-	C = context->IntermediateHash[2];
-	D = context->IntermediateHash[3];
-	E = context->IntermediateHash[4];
-	F = context->IntermediateHash[5];
-	G = context->IntermediateHash[6];
-	H = context->IntermediateHash[7];
+	A = context->iv[0];
+	B = context->iv[1];
+	C = context->iv[2];
+	D = context->iv[3];
+	E = context->iv[4];
+	F = context->iv[5];
+	G = context->iv[6];
+	H = context->iv[7];
 	for (i = 0; i < 64; i++)
 	{
 
@@ -150,14 +150,14 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 		F = E;
 		E = TT2 ^ LeftShift(TT2, 9) ^ LeftShift(TT2, 17);
 	}
-	context->IntermediateHash[0] ^= A;
-	context->IntermediateHash[1] ^= B;
-	context->IntermediateHash[2] ^= C;
-	context->IntermediateHash[3] ^= D;
-	context->IntermediateHash[4] ^= E;
-	context->IntermediateHash[5] ^= F;
-	context->IntermediateHash[6] ^= G;
-	context->IntermediateHash[7] ^= H;
+	context->iv[0] ^= A;
+	context->iv[1] ^= B;
+	context->iv[2] ^= C;
+	context->iv[3] ^= D;
+	context->iv[4] ^= E;
+	context->iv[5] ^= F;
+	context->iv[6] ^= G;
+	context->iv[7] ^= H;
 }
 
 //SM3消息加密运算函数
@@ -204,8 +204,8 @@ unsigned char *SM3::Calculate(const unsigned char *message,
 
 	if (IsLittleEndian())
 		for (i = 0; i < 8; i++)
-			ReverseWord(context.IntermediateHash + i);
-	memcpy(digest, context.IntermediateHash, HASH_SIZE);
+			ReverseWord(context.iv + i);
+	memcpy(digest, context.iv, HASH_SIZE);
 
 	return digest; 
 }
