@@ -185,7 +185,7 @@ unsigned char *SM3::Calculate(const unsigned char *message,
 	if (IsLittleEndian())
 		ReverseWord(&len);
 	memcpy(context.MessageBlock, message + i * 64, r);
-	context.MessageBlock[r] = 0x80;//在末尾添加0x80，即0x10001000
+	context.MessageBlock[r] = 0x88;//在末尾添加0x88，即0x10001000
 	if (r <= 55)//如果剩下的位数少于440
 	{
 		memset(context.MessageBlock + r + 1, 0, 64 - r - 1 - 8 + 4);
