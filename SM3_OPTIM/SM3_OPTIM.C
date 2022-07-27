@@ -69,6 +69,12 @@ unsigned int GG(unsigned int a, unsigned int b, unsigned int c, int i)
 		return 0;
 }
 
+//P0
+unsigned int P0(unsigned int a)
+{
+	return a ^ LeftShift(a, 9) ^ LeftShift(a, 17);
+}
+
 //反转四个字节的字节序
 unsigned int *ReverseWord(unsigned int *sequence)
 {
@@ -97,8 +103,6 @@ void SM3_INIT(SM3::sm3_context_s *context) {
 	context->iv[6] = 0xe38dee4d;
 	context->iv[7] = 0xb0fb0e4e;
 }
-
-
 
 //处理消息块
 void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
@@ -149,7 +153,7 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 		H = G;
 		G = LeftShift(F, 19);
 		F = E;
-		E = TT2 ^ LeftShift(TT2, 9) ^ LeftShift(TT2, 17);
+		E = P0(TT2);
 
 	}
 	context->iv[0] ^= A;
