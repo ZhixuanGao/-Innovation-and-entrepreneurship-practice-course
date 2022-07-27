@@ -12,10 +12,12 @@
 #include <time.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <iomanip>
 #include "SM3.h"
 
 using namespace std;
 unsigned int hash_all = 0; //总的消息块
+unsigned int t[64];//提前计算出常量t的值进行存储
 
 #define MAXSIZE 1024 * 512 //加密消息最大长度
 
@@ -59,23 +61,12 @@ unsigned int GG(unsigned int a, unsigned int b, unsigned int c, int i)
 		return 0;
 }
 
-//实现置换功能P0
-unsigned int P0(unsigned int a)
-{
-	return a ^ LeftShift(a, 9) ^ LeftShift(a, 17);
-}
-
-//实现置换功能P1
-unsigned int P1(unsigned int a)
-{
-	return a ^ LeftShift(a, 15) ^ LeftShift(a, 23);
-}
-
 //反转四个字节的字节序
 unsigned int *ReverseWord(unsigned int *sequence)
 {
 	unsigned char *byte, temp;
 	byte = (unsigned char *)sequence;
+
 	temp = byte[0];
 	byte[0] = byte[3];
 	byte[3] = temp;
@@ -83,8 +74,8 @@ unsigned int *ReverseWord(unsigned int *sequence)
 	temp = byte[1];
 	byte[1] = byte[2];
 	byte[2] = temp;
-	return sequence;
 
+	return sequence;
 }
 
 //初始化函数
@@ -116,8 +107,7 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 	}
 	for (i = 16; i < 68; i++)
 	{
-		W1[i] = (W1[i - 16] ^ W1[i - 9] ^ LeftShift(W1[i - 3], 15)) ^ LeftShift((W1[i - 16] ^ W1[i - 9] ^ LeftShift(W1[i - 3], 15)), 15) ^ LeftShift((W1[i - 16] ^ W1[i - 9] ^ LeftShift(W1[i - 3], 15)), 23)
-			^ LeftShift(W1[i - 13], 7) ^ W1[i - 6];
+		W1[i] = (W1[i - 16] ^ W1[i - 9] ^ LeftShift(W1[i - 3], 15)) ^ LeftShift((W1[i - 16] ^ W1[i - 9] ^ LeftShift(W1[i - 3], 15)), 15) ^ LeftShift((W1[i - 16] ^ W1[i - 9] ^ LeftShift(W1[i - 3], 15)), 23)^ LeftShift(W1[i - 13], 7) ^ W1[i - 6];
 	}
 	for (i = 0; i < 64; i++)
 	{
@@ -133,6 +123,7 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 	F = context->iv[5];
 	G = context->iv[6];
 	H = context->iv[7];
+
 	for (i = 0; i < 64; i++)
 	{
 
@@ -149,6 +140,7 @@ void SM3_ProcessMessageBlock(SM3::sm3_context_s *context)
 		G = LeftShift(F, 19);
 		F = E;
 		E = TT2 ^ LeftShift(TT2, 9) ^ LeftShift(TT2, 17);
+
 	}
 	context->iv[0] ^= A;
 	context->iv[1] ^= B;
@@ -186,7 +178,7 @@ unsigned char *SM3::Calculate(const unsigned char *message,
 	if (IsLittleEndian())
 		ReverseWord(&len);
 	memcpy(context.MessageBlock, message + i * 64, r);
-	context.MessageBlock[r] = 0x88;//在末尾添加0x88，即0x10001000
+	context.MessageBlock[r] = 0x80;//在末尾添加0x80，即0x10000000
 	if (r <= 55)//如果剩下的位数少于440
 	{
 		memset(context.MessageBlock + r + 1, 0, 64 - r - 1 - 8 + 4);
@@ -210,7 +202,7 @@ unsigned char *SM3::Calculate(const unsigned char *message,
 	return digest; 
 }
 
-//执行SM3j加密test中的内容并获得计算结果
+//执行SM3计算test中的内容并获得计算结果
 std::vector<uint32_t> SM3::Implement_SM3(char *filepath)
 {
 	std::vector<uint32_t> hash_result(32, 0);
@@ -240,15 +232,13 @@ std::vector<uint32_t> SM3::Implement_SM3(char *filepath)
 	return hash_result;
 }
 
-
-
 int main() {
 	char filepath[] = "test.txt";
 	std::vector<uint32_t> hash_result;
 	hash_result = SM3::Implement_SM3(filepath);
 	std:cout << "Hash Result: ";
  	for (int i = 0; i < 32; i++) {
-		std::cout << std::hex << std::setw(2) << std::setfill('0') << hash_result[i];
+		std::cout << setiosflags(ios::uppercase) << std::hex << std::setw(2) << std::setfill('0') << hash_result[i];
 		if (((i + 1) % 4) == 0) std::cout << " ";
 	}
 	std::cout << std::endl;
